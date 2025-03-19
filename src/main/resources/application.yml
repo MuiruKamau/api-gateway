@@ -1,0 +1,49 @@
+server:
+  port: 8080 # Gateway port
+
+spring:
+  main:
+    web-application-type: reactive # Ensure reactive web type
+    allow-bean-definition-overriding: true # For any potential bean overriding needs
+  application:
+    name: api-gateway # Name for Eureka registration
+  cloud:
+    gateway:
+      globalcors: # Configure CORS globally
+        corsConfigurations:
+          '[/**]': # Apply to all routes
+            allowedOrigins: "*"
+            allowedMethods: "*"
+            allowedHeaders: "*"
+      routes:
+        - id: configuration-service-route # Route to configuration-service
+          uri: lb://configuration-service
+          predicates:
+            - Path=/config/**
+          filters:
+            - RewritePath=/config/(?<segment>.*), /$\{segment}
+
+        # Removed: authentication-service-route as authentication is now in gateway
+
+  datasource: # Database configuration - copied from AuthenticationService
+    url: jdbc:mysql://localhost:3306/schoolmanagement?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+    username: root
+    password: Ben@24
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa: # JPA configuration - copied from AuthenticationService
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+      format_sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/ # Eureka server URL
+
+jwt:
+  secret: b8bf6d705e12323b8ba6dc75cf5901e54054785994cc52e01a784e2867e0835fe641e81b06b8f07ce527d366ded74183a4af85577e5e60bacdf15917a541b43538d37ba9d1995cdc6b070b497c18e65716b1658f8597a5bf0d7c48f8b90d5c19832cd98cbaed65318c0d639f6fe178bd76873db273f1227a07f762aeb7689606792f2cd8e8e75115d37767015cce13b4f7265fde3351c9e3c9e4ee4624880fc2a48be32d90d5e9af1a7233eb7b290941563c0aba3d1064338aad3a21cc801b674ad8c50603b5fbefda1e12b6ef17871a31e39312859e1ba7f41f3b29ca476ee1fa445385b66a478a9802bb9c8ce309d3a8c2b41c9f9c47f50f7cb62d3e17906b # Replace with a strong, randomly generated secret key
