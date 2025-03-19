@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 
 @Component
 public class CustomJwtAuthenticationConverter implements ServerAuthenticationConverter {
+
     private final JwtUtil jwtUtil;
 
     public CustomJwtAuthenticationConverter(JwtUtil jwtUtil) {
@@ -37,8 +38,12 @@ public class CustomJwtAuthenticationConverter implements ServerAuthenticationCon
                         String username = claims.getSubject();
                         List<String> roles = claims.get("roles", List.class);
 
-                        System.out.println("Username: " + username);
-                        System.out.println("Roles: " + roles);
+                        // Add user information to headers
+                        exchange.getRequest().mutate()
+                                .header("X-User-Username", username)
+                                .header("X-User-Roles", String.join(",", roles))
+                                .build();
+                        System.out.println("Adding headers - Username: " + username + ", Roles: " + String.join(",", roles));
 
                         List<SimpleGrantedAuthority> authorities = roles.stream()
                                 .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
@@ -53,58 +58,7 @@ public class CustomJwtAuthenticationConverter implements ServerAuthenticationCon
     }
 }
 
-//package com.app.api_gateway.security;
-//
-//import org.springframework.security.authentication.ReactiveAuthenticationManager;
-//import org.springframework.security.core.Authentication;
-//import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
-//import org.springframework.stereotype.Component;
-//import reactor.core.publisher.Mono;
-//
-//@Component
-//public class CustomReactiveJwtAuthenticationManager implements ReactiveAuthenticationManager {
-//    @Override
-//    public Mono<Authentication> authenticate(Authentication authentication) {
-//        // For JWT authentication, the token is already validated by the JwtAuthenticationConverter
-//        // Just return the authentication object as-is
-//        return Mono.just(authentication);
-//    }
-//}
 
-//package com.app.api_gateway.security;
-//
-//import io.jsonwebtoken.Claims;
-//import org.springframework.core.convert.converter.Converter;
-//import org.springframework.security.authentication.AbstractAuthenticationToken;
-//import org.springframework.security.core.GrantedAuthority;
-//import org.springframework.security.core.authority.SimpleGrantedAuthority;
-//import org.springframework.security.oauth2.jwt.Jwt;
-//import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
-//import org.springframework.stereotype.Component;
-//import reactor.core.publisher.Mono;
-//
-//import java.util.Collection;
-//import java.util.List;
-//import java.util.stream.Collectors;
-//
-//@Component
-//public class CustomJwtAuthenticationConverter implements Converter<Jwt, Mono<AbstractAuthenticationToken>> {
-//    private final JwtUtil jwtUtil;
-//
-//    public CustomJwtAuthenticationConverter(JwtUtil jwtUtil) {
-//        this.jwtUtil = jwtUtil;
-//    }
-//
-//    @Override
-//    public Mono<AbstractAuthenticationToken> convert(Jwt jwt) {
-//        Claims claims = jwtUtil.getAllClaimsFromToken(jwt.getTokenValue());
-//        List<String> roles = claims.get("roles", List.class);
-//        Collection<GrantedAuthority> authorities = roles.stream()
-//                .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
-//                .collect(Collectors.toList());
-//
-//        return Mono.just(new JwtAuthenticationToken(jwt, authorities));
-//    }
-//}
-//
+
+
 
