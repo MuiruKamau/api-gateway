@@ -29,6 +29,7 @@ public class CustomJwtAuthenticationConverter implements ServerAuthenticationCon
                 .flatMap(token -> {
                     try {
                         if (!jwtUtil.validateToken(token)) {
+                            System.out.println("Token validation failed");
                             return Mono.empty();
                         }
 
@@ -36,12 +37,16 @@ public class CustomJwtAuthenticationConverter implements ServerAuthenticationCon
                         String username = claims.getSubject();
                         List<String> roles = claims.get("roles", List.class);
 
+                        System.out.println("Username: " + username);
+                        System.out.println("Roles: " + roles);
+
                         List<SimpleGrantedAuthority> authorities = roles.stream()
                                 .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
                                 .collect(Collectors.toList());
 
                         return Mono.just(new UsernamePasswordAuthenticationToken(username, null, authorities));
                     } catch (Exception e) {
+                        System.out.println("Exception during token parsing: " + e.getMessage());
                         return Mono.empty();
                     }
                 });
